@@ -1,114 +1,108 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
   <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sitio Gustos musicales</title>
+    <title>Modelo Musical</title>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.0.0/dist/tf.min.js"></script>
-      <style>
-    :root{
-      display:flex;
-      height: 100vw;
-      width: 100wh;
-      justify-content: center;
-      align-items: center;
-      background-color: lightsteelblue;
-    }
-    .container{
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-    }
-  </style> 
-<h3>El resutado se muestra por consolona.</h3>
     <script>
-      // Tidy to auto-clean all these tensors
+      // Utilizamos tf.tidy para limpiar automáticamente los tensores y evitar fugas de memoria
       tf.tidy(() => {
-        const users = ['Gant', 'Todd', 'Jed', 'Justin']
+        // Lista de usuarios
+        const users = ['Sherlock', 'Batman', 'Rick', 'Joker']
+        console.log("Usuarios:", users);
+        
+        // Lista de bandas musicales
         const bands = [
-            'Nirvana',
-            'Nine Inch Nails',
-            'Backstreet Boys',
-            'N Sync',
-            'Night Club',
-            'Apashe',
-            'STP',
+          'Nirvana',
+          'Nine Inch Nails',
+          'Backstreet Boys',
+          'N Sync',
+          'Night Club',
+          'Apashe',
+          'STP',
         ]
+        console.log("Bandas:", bands);
+        
+        // Características o géneros musicales
         const features = [
-            'Grunge',
-            'Rock',
-            'Industrial',
-            'Boy Band',
-            'Dance',
-            'Techno',
+          'Grunge',
+          'Rock',
+          'Industrial',
+          'Boy Band',
+          'Dance',
+          'Techno',
         ]
-
-        // User votes <4>
-          //Este es el tensor con las bandas
+        console.log("Géneros musicales:", features);
+        
+        // Votaciones de usuarios para cada banda (escala 0-10)
+        // Matriz de dimensión 4x7 (4 usuarios x 7 bandas)
         const user_votes = tf.tensor([
-            [10, 9, 1, 1, 8, 7, 8],
-            [6, 8, 2, 2, 0, 10, 0],
-            [0, 2, 10, 9, 3, 7, 0],
-            [7, 4, 2, 3, 6, 5, 5],
+          [10, 9, 1, 1, 8, 7, 8],   // Valoraciones de Gant
+          [6, 8, 2, 2, 0, 10, 0],   // Valoraciones de Todd
+          [0, 2, 10, 9, 3, 7, 0],   // Valoraciones de Jed
+          [7, 4, 2, 3, 6, 5, 5],    // Valoraciones de Justin
         ])
-
-        // Music Styles <5>
-          //Este indica si la banda pertenece a un género
+        console.log("Matriz de valoraciones de usuarios:");
+        user_votes.print();
+        console.log("Dimensiones de user_votes:", user_votes.shape);
+        
+        // Matriz de características de bandas
+        // Cada fila es una banda, cada columna un género musical
+        // 1 = la banda pertenece a ese género, 0 = no pertenece
+        // Matriz de dimensión 7x6 (7 bandas x 6 géneros)
         const band_feats = tf.tensor([
-            [1, 1, 0, 0, 0, 0],
-            [1, 0, 1, 0, 0, 0],
-            [0, 0, 0, 1, 1, 0],
-            [0, 0, 0, 1, 0, 0],
-            [0, 0, 1, 0, 0, 1],
-            [0, 0, 1, 0, 0, 1],
-            [1, 1, 0, 0, 0, 0],
+          [1, 1, 0, 0, 0, 0],  // Nirvana: Grunge, Rock
+          [1, 0, 1, 0, 0, 0],  // Nine Inch Nails: Grunge, Industrial
+          [0, 0, 0, 1, 1, 0],  // Backstreet Boys: Boy Band, Dance
+          [0, 0, 0, 1, 0, 0],  // N Sync: Boy Band
+          [0, 0, 1, 0, 0, 1],  // Night Club: Industrial, Techno
+          [0, 0, 1, 0, 0, 1],  // Apashe: Industrial, Techno
+          [1, 1, 0, 0, 0, 0],  // STP: Grunge, Rock
         ])
-
-        // Estilo Favorito del usuario
+        console.log("Matriz de características de bandas:");
+        band_feats.print();
+        console.log("Dimensiones de band_feats:", band_feats.shape);
+        
+        // Calculamos los géneros favoritos de cada usuario
+        // Multiplicación de matrices: [4x7] * [7x6] = [4x6]
+        // Cada fila representa un usuario, cada columna un género
         const user_feats = tf.matMul(user_votes, band_feats)
-        // Imprimimos las respuesta
-        user_feats.print()
-
-        // Estilizamos un poco
+        console.log("Resultado de la multiplicación (afinidad usuario-género):");
+        user_feats.print();
+        console.log("Dimensiones de user_feats:", user_feats.shape);
+        
+        // Ordenamos los géneros preferidos para cada usuario
+        // topk devuelve los k valores más altos y sus índices
         const top_user_features = tf.topk(user_feats, features.length)
-        // Vovlemos a JavaScript
+        console.log("Valores de afinidad ordenados:");
+        top_user_features.values.print();
+        console.log("Índices de géneros ordenados por preferencia:");
+        top_user_features.indices.print();
+        
+        // Convertimos el tensor a un array de JavaScript
         const top_genres = top_user_features.indices.arraySync()
-        // Imprimimos el resultado
+        console.log("Array de índices de géneros preferidos:", top_genres);
+        
+        // Imprimimos los resultados finales para cada usuario
+        console.log("--- RESULTADOS FINALES ---");
         users.map((u, i) => {
+          // Mapeamos los índices a nombres de géneros
           const rankedCategories = top_genres[i].map((v) => features[v])
-          console.log(u, rankedCategories)
+          console.log(`${u}: Géneros preferidos en orden:`, rankedCategories);
+          
+          // Mostramos las puntuaciones de afinidad para cada género
+          const userValues = user_feats.arraySync()[i];
+          console.log(`${u}: Puntuaciones de afinidad:`, 
+            features.reduce((obj, feat, j) => {
+              obj[feat] = userValues[j];
+              return obj;
+            }, {})
+          );
         })
       })
     </script>
   </head>
   <body>
-    <div class="container">
-      <h1>Modelo Musical</h1>
-      <div>
-        <input type="radio" name="puntos" id="">
-        <input type="radio" name="puntos" id="">
-        <input type="radio" name="puntos" id="">
-        <input type="radio" name="puntos" id="">
-        <input type="radio" name="puntos" id="">
-        <input type="radio" name="puntos" id="">
-        <input type="radio" name="puntos" id="">
-        <input type="radio" name="puntos" id="">
-        <input type="radio" name="puntos" id="">
-        <input type="radio" name="puntos" id="">
-        <button type="button" onclick="guardar()">Enviar</button>
-      </div>
-    </div>
+    <h1>Análisis de Gustos Musicales</h1>
+    <p>Los resultados serán mostrados por Consola. ( F12 ) </p>
   </body>
-  <script>
-    let preferencias = []
-    const guardar = (event) => {
-      preferencias.push(1)
-    }
-
-    const calcularPreferencias = () =>{
-      
-    }
-  </script>
-
 </html>
